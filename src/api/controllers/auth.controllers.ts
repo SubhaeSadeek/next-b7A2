@@ -17,13 +17,15 @@ const signupUser = async (req: Request, res: Response) => {
 };
 
 const loginUser = async (req: Request, res: Response) => {
-	const { userEmail, password } = req.body;
-	const user = await authServices.validateUser(userEmail, password);
+	console.log("am I getting user credentials: ", req.body);
+	const { email, password } = req.body;
+	const user = await authServices.validateUser(email, password);
 	if (!user) {
 		sendResponse(res, { message: "invalid email or password" }, 401);
 		return;
 	}
 	const { accessToken, refreshToken } = signToken(user);
+
 	const result = {
 		user: user,
 		accessToken,

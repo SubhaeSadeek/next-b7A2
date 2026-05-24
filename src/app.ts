@@ -3,12 +3,15 @@ import express, {
 	type Request,
 	type Response,
 } from "express";
+
+import cookieParser from "cookie-parser";
 import { authRoutes } from "./api/routes/auth.routes";
+
 import { globalErrorHandler } from "./middleware/globalErrorHandler";
 
 const app: Application = express();
 app.use(express.json());
-// app.use(logger);
+app.use(cookieParser());
 
 app.get("/", (req: Request, res: Response) => {
 	res.send("hellow friends!!!");
