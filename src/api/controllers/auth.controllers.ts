@@ -26,6 +26,12 @@ const loginUser = async (req: Request, res: Response) => {
 	}
 	const { accessToken, refreshToken } = signToken(user);
 
+	res.cookie("refreshToken", refreshToken, {
+		httpOnly: true,
+		secure: false,
+		sameSite: "lax",
+	});
+
 	const result = {
 		user: user,
 		accessToken,
@@ -34,10 +40,15 @@ const loginUser = async (req: Request, res: Response) => {
 	sendResponse(
 		res,
 		{ message: "user logged in successful", data: result },
-		201,
+		200,
 	);
 };
-
+export const refreshToken = (req: Request, res: Response) => {
+	const refreshToken = req.cookies?.refreshToken;
+	if (!refreshToken) {
+		sendResponse(res, { message: "refresh token not found", error: true }, 404);
+	}
+};
 export const authController = {
 	signupUser,
 	loginUser,

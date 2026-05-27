@@ -9,3 +9,9 @@ export const signToken = (payload: RUser) => {
 	});
 	return { refreshToken, accessToken };
 };
+
+export const varifyToken = (token: string, type: "access" | "refresh") => {
+	const secret = type === "access" ? config.jwt_secret : config.refresh_secret;
+
+	return jwt.verify(token, secret);
+};
