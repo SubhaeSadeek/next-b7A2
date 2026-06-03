@@ -26,6 +26,12 @@ class AuthService {
 		const isUserValid = await bcrypt.compare(password, password_hash);
 		return isUserValid ? user : null;
 	}
+	async getUserById(id: string) {
+		const result = await sql`
+		SELECT id, name, email, age, role FROM users WHERE id = ${id} 
+		`;
+		return result[0] as RUser & { id: number };
+	}
 }
 
 export default new AuthService();
