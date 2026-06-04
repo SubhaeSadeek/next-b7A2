@@ -7,6 +7,7 @@ import express, {
 import cookieParser from "cookie-parser";
 import { authRoutes } from "./api/routes/auth.routes";
 
+import { issuesRoutes } from "./api/routes/issues.routes";
 import { globalErrorHandler } from "./middleware/globalErrorHandler";
 
 const app: Application = express();
@@ -16,6 +17,7 @@ app.use(cookieParser());
 app.get("/", (req: Request, res: Response) => {
 	res.send("hellow friends!!!");
 });
-app.use("/api/v1/auth", authRoutes.router);
+app.use("/api/auth", authRoutes.router);
+app.use("/api/issues", issuesRoutes.router);
 app.use(globalErrorHandler);
 export default app;

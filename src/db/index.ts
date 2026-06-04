@@ -9,8 +9,7 @@ export const initDB = async () => {
         id SERIAL PRIMARY KEY,
         name VARCHAR(75) NOT NULL,  
         email VARCHAR(50) UNIQUE NOT NULL,
-        age INT NOT NULL,
-        password_hash TEXT NOT NULL,
+        password TEXT NOT NULL,
         role VARCHAR(20) NOT NULL,
         created_at TIMESTAMP  NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMP NOT NULL DEFAULT NOW()
@@ -18,12 +17,13 @@ export const initDB = async () => {
 )`;
 
 	await sql`
-CREATE TABLE IF NOT EXISTS orders(
+CREATE TABLE IF NOT EXISTS issues(
     id SERIAL PRIMARY KEY,
-    customer_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    quantity INT NOT NULL CHECK(quantity > 0),
-    food TEXT NOT NULL,
-    price NUMERIC(10, 2) NOT NULL,
+    title VARCHAR(150) NOT NULL,
+    description TEXT NOT NULL CHECK(length(description) >= 20),
+    type VARCHAR(20) NOT NULL CHECK(type IN ('bug', 'feature_request')),
+    status VARCHAR(15) NOT NULL CHECK(status IN ('open', 'in_progress', 'resolved')), 
+    reporter_id INT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 )

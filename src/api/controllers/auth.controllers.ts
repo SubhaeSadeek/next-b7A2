@@ -32,9 +32,8 @@ const loginUser = async (req: Request, res: Response) => {
 	});
 
 	const result = {
+		token: accessToken,
 		user: user,
-		accessToken,
-		refreshToken,
 	};
 	sendResponse(
 		res,
@@ -42,6 +41,9 @@ const loginUser = async (req: Request, res: Response) => {
 		200,
 	);
 };
+
+// here we genereate refresh token again after varifying user from refresh token we put in cookies and then varify user by it. after that we generate another access token and update the refesh token. THIS TASK IS OPTIONAL AND EXTRA as the assignement ONLY requires to genereate access token/single token to work with.
+
 const refreshToken = async (req: Request, res: Response) => {
 	const refreshToken = req.cookies?.refreshToken;
 	if (!refreshToken) {
@@ -49,11 +51,17 @@ const refreshToken = async (req: Request, res: Response) => {
 	}
 	const payload = varifyToken(refreshToken, "refresh");
 	if (!payload) {
-		sendResponse(res, { message: "refresh token is invalid" }, 401);
+		sendResponse(
+			res,
+			{ message: "User not varified or refresh token is invalid" },
+			401,
+		);
+		return;
 	}
 	const user = await authServices.getUserById(payload.id);
 	if (!user) {
 		sendResponse(res, { message: "User not found" }, 404);
+		return;
 	}
 	const { accessToken, refreshToken: newRefreshToken } = signToken(user);
 	res.cookie("refreshToken", newRefreshToken, {
@@ -62,10 +70,9 @@ const refreshToken = async (req: Request, res: Response) => {
 		httpOnly: true,
 	});
 	sendResponse(res, {
-		message: "tokens are sent",
+		message: "access tokens has been sent",
 		data: {
-			accessToken,
-			refreshToken,
+			token: accessToken,
 		},
 	});
 };
