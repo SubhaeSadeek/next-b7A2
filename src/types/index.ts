@@ -7,6 +7,25 @@ export type ReportType = (typeof reportType)[number];
 const reportStatus = ["open", "in_progress", "resolved"] as const;
 export type ReportStatus = (typeof reportStatus)[number];
 
+export const sortOptions = ["newest", "oldest"] as const;
+export type SortOption = (typeof sortOptions)[number];
+
+export interface IssueQuery {
+	sort?: SortOption;
+	type?: ReportType;
+	status?: ReportStatus;
+}
+export function isSortOption(value: string): value is SortOption {
+	return sortOptions.includes(value as SortOption);
+}
+
+export function isReportType(value: string): value is ReportType {
+	return reportType.includes(value as ReportType);
+}
+
+export function isReportStatus(value: string): value is ReportStatus {
+	return reportStatus.includes(value as ReportStatus);
+}
 export type User = {
 	id: number;
 	name: string;

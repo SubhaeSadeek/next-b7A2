@@ -10,5 +10,5 @@ router.post(
 	authorizingRole("contributor", "maintainer"),
 	issuesController.createIssue,
 );
-
+router.get("/", issuesController.getAllIssues);
 export const issuesRoutes = { router };
