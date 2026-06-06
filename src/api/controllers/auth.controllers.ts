@@ -7,11 +7,15 @@ const signupUser = async (req: Request, res: Response) => {
 	const result = await authServices.createUser(req.body);
 
 	if (!result) {
-		return sendResponse(res, { message: " can not create user" }, 500);
+		return sendResponse(
+			res,
+			{ success: false, message: " can not create user" },
+			500,
+		);
 	}
 	sendResponse(
 		res,
-		{ message: "user created successfully", data: result },
+		{ success: true, message: "user created successfully", data: result },
 		201,
 	);
 };
@@ -20,7 +24,11 @@ const loginUser = async (req: Request, res: Response) => {
 	const { email, password } = req.body;
 	const user = await authServices.validateUser(email, password);
 	if (!user) {
-		sendResponse(res, { message: "invalid email or password" }, 401);
+		sendResponse(
+			res,
+			{ success: false, message: "invalid email or password" },
+			401,
+		);
 		return;
 	}
 	const { accessToken, refreshToken } = signToken(user);
@@ -37,7 +45,7 @@ const loginUser = async (req: Request, res: Response) => {
 	};
 	sendResponse(
 		res,
-		{ message: "user logged in successful", data: result },
+		{ success: true, message: "user logged in successful", data: result },
 		200,
 	);
 };
@@ -47,20 +55,27 @@ const loginUser = async (req: Request, res: Response) => {
 const refreshToken = async (req: Request, res: Response) => {
 	const refreshToken = req.cookies?.refreshToken;
 	if (!refreshToken) {
-		sendResponse(res, { message: "refresh token not found", error: true }, 404);
+		sendResponse(
+			res,
+			{ success: false, message: "refresh token not found" },
+			404,
+		);
 	}
 	const payload = varifyToken(refreshToken, "refresh");
 	if (!payload) {
 		sendResponse(
 			res,
-			{ message: "User not varified or refresh token is invalid" },
+			{
+				success: false,
+				message: "User not varified or refresh token is invalid",
+			},
 			401,
 		);
 		return;
 	}
 	const user = await authServices.getUserById(payload.id);
 	if (!user) {
-		sendResponse(res, { message: "User not found" }, 404);
+		sendResponse(res, { success: false, message: "User not found" }, 404);
 		return;
 	}
 	const { accessToken, refreshToken: newRefreshToken } = signToken(user);
@@ -70,6 +85,7 @@ const refreshToken = async (req: Request, res: Response) => {
 		httpOnly: true,
 	});
 	sendResponse(res, {
+		success: true,
 		message: "access tokens has been sent",
 		data: {
 			token: accessToken,

@@ -1,5 +1,5 @@
 import { sql } from "../../db";
-import type { IssueQuery, RIssue } from "../../types";
+import type { Issue, IssueQuery, RIssue } from "../../types";
 
 class IssuesService {
 	async createIssueInDB(payload: RIssue, reporterId: number) {
@@ -14,7 +14,7 @@ class IssuesService {
 	}
 
 	async getAllIssuesFromDB({ sort = "newest", type, status }: IssueQuery) {
-		const orderClause =
+		const sortSql =
 			sort === "oldest"
 				? sql`ORDER BY created_at ASC`
 				: sql`ORDER BY created_at DESC`;
@@ -27,27 +27,27 @@ class IssuesService {
         FROM issues
         WHERE type = ${type}
         AND status = ${status}
-        ${orderClause}
+        ${sortSql}
       `;
 		} else if (type) {
 			issues = await sql`
         SELECT *
         FROM issues
         WHERE type = ${type}
-        ${orderClause}
+        ${sortSql}
       `;
 		} else if (status) {
 			issues = await sql`
         SELECT *
         FROM issues
         WHERE status = ${status}
-        ${orderClause}
+        ${sortSql}
       `;
 		} else {
 			issues = await sql`
         SELECT *
         FROM issues
-        ${orderClause}
+        ${sortSql}
       `;
 		}
 
@@ -77,6 +77,42 @@ class IssuesService {
 			created_at: issue.created_at,
 			updated_at: issue.updated_at,
 		}));
+	}
+	async getSingleIssueFromDB(issueId: number) {
+		const issue = await sql`
+		SELECT * FROM issues
+		WHERE id = ${issueId}
+		
+		`;
+		if (!issue.length) {
+			return null;
+		}
+		const {
+			id,
+			title,
+			description,
+			type,
+			status,
+			reporter_id,
+			created_at,
+			updated_at,
+		} = issue[0] as Issue;
+
+		const reporter = await sql`
+		SELECT id, name, role FROM users
+		WHERE id = ${reporter_id}
+		`;
+
+		return {
+			id,
+			title,
+			description,
+			type,
+			status,
+			reporter: reporter[0],
+			created_at,
+			updated_at,
+		};
 	}
 }
 

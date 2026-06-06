@@ -12,7 +12,7 @@ import issuesServices from "../services/issues.services";
 const createIssue = async (req: Request, res: Response) => {
 	const reporterId = req.user?.id;
 	if (!reporterId) {
-		return sendResponse(res, { message: "user not found" });
+		return sendResponse(res, { success: false, message: "user not found" });
 	}
 	const result = await issuesServices.createIssueInDB(
 		req.body,
@@ -20,11 +20,11 @@ const createIssue = async (req: Request, res: Response) => {
 	);
 	return sendResponse(
 		res,
-		{ message: "Issue created successfully", data: result },
+		{ success: true, message: "Issue created successfully", data: result },
 		201,
 	);
 };
-
+// get all issues by query params and send res accordingly
 const getAllIssues = async (req: Request, res: Response) => {
 	const { sort, type, status } = req.query;
 
@@ -33,6 +33,7 @@ const getAllIssues = async (req: Request, res: Response) => {
 		return sendResponse(
 			res,
 			{
+				success: false,
 				message: "Invalid sort value in query params",
 			},
 			400,
@@ -43,6 +44,7 @@ const getAllIssues = async (req: Request, res: Response) => {
 		return sendResponse(
 			res,
 			{
+				success: false,
 				message: "Invalid type value in query params",
 			},
 			400,
@@ -53,6 +55,7 @@ const getAllIssues = async (req: Request, res: Response) => {
 		return sendResponse(
 			res,
 			{
+				success: false,
 				message: "Invalid status value in query params",
 			},
 			400,
@@ -76,20 +79,48 @@ const getAllIssues = async (req: Request, res: Response) => {
 	const result = await issuesServices.getAllIssuesFromDB(paramsFromQuery);
 	if (result.length === 0) {
 		return sendResponse(res, {
-			message:
-				"Please set your query properly or NO data available for this query",
+			success: false,
+			message: "NO data available for this query",
 		});
 	}
 	return sendResponse(
 		res,
 		{
+			success: true,
 			message: "issues given according to query",
 			data: result,
 		},
 		200,
 	);
 };
+
+// get single issue by issue id
+const getSingleIssue = async (req: Request, res: Response) => {
+	const id = parseInt(req.params.issueId as string); // param is /:issueId
+
+	if (isNaN(id)) {
+		return sendResponse(res, {
+			success: false,
+			message: "Issue ID must be in number",
+		});
+	}
+	const result = await issuesServices.getSingleIssueFromDB(id);
+	if (!result) {
+		return sendResponse(
+			res,
+			{ success: false, message: "Can not find issue with this id" },
+			500,
+		);
+	}
+	return sendResponse(
+		res,
+		{ success: true, message: "Issue retrived successfully", data: result },
+		200,
+	);
+};
+
 export const issuesController = {
 	createIssue,
 	getAllIssues,
+	getSingleIssue,
 };
