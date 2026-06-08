@@ -171,6 +171,28 @@ class IssuesService {
 			);
 		}
 	}
+
+	// delete operation
+	async deleteIssueFromDB(issueId: number, role: Role) {
+		const result = await sql`
+			SELECT * FROM issues
+			WHERE id = ${issueId}`;
+
+		const issue = result[0] ?? null;
+		if (!issue) {
+			return null;
+		}
+
+		if (role === "maintainer") {
+			const deletedIssue = await sql`
+			DELETE FROM issues
+			WHERE id = ${issueId} 
+			`;
+			return true;
+		} else {
+			throw new Error(`Unouthorized!! Only maintainer can delete an issue!`);
+		}
+	}
 }
 
 export default new IssuesService();

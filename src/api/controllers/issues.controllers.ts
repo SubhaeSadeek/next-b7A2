@@ -141,7 +141,7 @@ const updateIssue = async (req: Request, res: Response) => {
 			404,
 		);
 	}
-	console.log(req.user);
+
 	const result = await issuesServices.updateIssuesFromDB(
 		req.body,
 		id,
@@ -156,8 +156,39 @@ const updateIssue = async (req: Request, res: Response) => {
 	}
 	return sendResponse(res, {
 		success: true,
-		message: "Issue gotcha HEREEEEEEEEEEEEEEEEEEEEEEE!!!!!",
+		message: "Issue updated successfully",
 		data: result,
+	});
+};
+
+// delete an issue
+const deleteIssue = async (req: Request, res: Response) => {
+	const id = parseInt(req.params.issueId as string); // param is /:issueId
+
+	if (isNaN(id)) {
+		return sendResponse(res, {
+			success: false,
+			message: "Issue ID must be in number",
+		});
+	}
+
+	if (!req.user?.role) {
+		return sendResponse(res, {
+			success: false,
+			message: "Unouthorize! Only maintainer can delete an issue",
+		});
+	}
+	const result = await issuesServices.deleteIssueFromDB(id, req.user?.role);
+	if (!result) {
+		return sendResponse(res, {
+			success: false,
+			message: "Issue can not be deleted! Not found in DB",
+		});
+	}
+
+	return sendResponse(res, {
+		success: true,
+		message: "Issue deleted successfully",
 	});
 };
 export const issuesController = {
@@ -165,4 +196,5 @@ export const issuesController = {
 	getAllIssues,
 	getSingleIssue,
 	updateIssue,
+	deleteIssue,
 };

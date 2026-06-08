@@ -7,15 +7,22 @@ import { sendResponse } from "../utils/sendResponse";
 export const auth = async (req: Request, res: Response, next: NextFunction) => {
 	const token = req.headers.authorization;
 	if (!token) {
-		return sendResponse(res, { message: "token not found" }, 401);
+		return sendResponse(
+			res,
+			{ success: false, message: "token not found" },
+			401,
+		);
 	}
 	const payload = varifyToken(token, "access");
 	if (!payload) {
-		return sendResponse(res, { message: "user is not authorized!" });
+		return sendResponse(res, {
+			success: false,
+			message: "user is not authorized!",
+		});
 	}
 	const user = await authServices.getUserById(payload.id);
 	if (!user) {
-		return sendResponse(res, { message: "User not found" });
+		return sendResponse(res, { success: false, message: "User not found" });
 	}
 	req.user = user;
 	next();
@@ -24,12 +31,17 @@ export const auth = async (req: Request, res: Response, next: NextFunction) => {
 export const authorizingRole = (...roles: Role[]) => {
 	return (req: Request, res: Response, next: NextFunction) => {
 		if (!req.user) {
-			sendResponse(res, { message: "User is not validated!" });
-			return;
+			return sendResponse(res, {
+				success: false,
+				message: "User is not validated!",
+			});
 		}
 		if (!roles.includes(req.user.role)) {
-			sendResponse(res, { message: "You do not have permission" });
+			return sendResponse(res, {
+				success: false,
+				message: "You do not have permission",
+			});
 		}
-		return next();
+		next();
 	};
 };
