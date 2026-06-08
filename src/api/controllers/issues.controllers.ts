@@ -178,6 +178,7 @@ const deleteIssue = async (req: Request, res: Response) => {
 			message: "Unouthorize! Only maintainer can delete an issue",
 		});
 	}
+
 	const result = await issuesServices.deleteIssueFromDB(id, req.user?.role);
 	if (!result) {
 		return sendResponse(res, {
