@@ -1,5 +1,11 @@
 import { sql } from "../../db";
-import type { Issue, IssueQuery, RIssue } from "../../types";
+import type {
+	Issue,
+	IssueQuery,
+	RIssue,
+	Role,
+	updateIssueBody,
+} from "../../types";
 
 class IssuesService {
 	async createIssueInDB(payload: RIssue, reporterId: number) {
@@ -113,6 +119,57 @@ class IssuesService {
 			created_at,
 			updated_at,
 		};
+	}
+	// update issue
+	async updateIssuesFromDB(
+		payload: updateIssueBody,
+		issueId: number,
+		role: Role,
+		userId?: number,
+	) {
+		const result = await sql`
+			SELECT * FROM issues
+			WHERE id = ${issueId}`;
+
+		const issue = result[0] ?? null;
+		if (!issue) {
+			return null;
+		}
+		if (
+			role === "contributor" &&
+			issue.reporter_id === userId &&
+			issue.status === "open"
+		) {
+			const updated = await sql`
+    UPDATE issues
+    SET
+      title = COALESCE(${payload.title}, title),
+      description = COALESCE(${payload.description}, description),
+      type = COALESCE(${payload.type}, type),
+      updated_at = NOW()
+    WHERE id = ${issueId}
+    RETURNING *
+  `;
+
+			return updated[0] ?? null;
+		} else if (role === "maintainer") {
+			const updated = await sql`
+    UPDATE issues
+    SET
+      title = COALESCE(${payload.title}, title),
+      description = COALESCE(${payload.description}, description),
+      type = COALESCE(${payload.type}, type),
+      updated_at = NOW()
+    WHERE id = ${issueId}
+    RETURNING *
+  `;
+
+			return updated[0] ?? null;
+		} else {
+			throw new Error(
+				`Contributor can only update issue having status being OPEN and of His own issue. this issue having ID no. ${issue.id} has status: ${issue.status.toUpperCase()}`,
+			);
+		}
 	}
 }
 

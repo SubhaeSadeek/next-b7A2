@@ -15,16 +15,19 @@ export interface IssueQuery {
 	type?: ReportType;
 	status?: ReportStatus;
 }
-export function isSortOption(value: string): value is SortOption {
-	return sortOptions.includes(value as SortOption);
+export const isRole = (role: string): role is Role =>
+	role.includes(role as Role);
+
+export function isSortOption(sort: string): sort is SortOption {
+	return sortOptions.includes(sort as SortOption);
 }
 
-export function isReportType(value: string): value is ReportType {
-	return reportType.includes(value as ReportType);
+export function isReportType(type: string): type is ReportType {
+	return reportType.includes(type as ReportType);
 }
 
-export function isReportStatus(value: string): value is ReportStatus {
-	return reportStatus.includes(value as ReportStatus);
+export function isReportStatus(status: string): status is ReportStatus {
+	return reportStatus.includes(status as ReportStatus);
 }
 export type User = {
 	id: number;
@@ -52,4 +55,8 @@ export type Issue = {
 export type RIssue = Omit<
 	Issue,
 	"id" | "reporter_id" | "created_at" | "updated_at"
+>;
+export type updateIssueBody = Omit<
+	Issue,
+	"id" | "reporter_id" | "created_at" | "updated_at" | "status"
 >;

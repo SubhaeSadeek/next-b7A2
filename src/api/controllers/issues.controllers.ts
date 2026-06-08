@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import {
 	isReportStatus,
 	isReportType,
+	isRole,
 	isSortOption,
 	type IssueQuery,
 } from "../../types";
@@ -119,8 +120,49 @@ const getSingleIssue = async (req: Request, res: Response) => {
 	);
 };
 
+// Update an issue (ROLE BASED)
+
+const updateIssue = async (req: Request, res: Response) => {
+	const id = parseInt(req.params.issueId as string); // param is /:issueId
+
+	if (isNaN(id)) {
+		return sendResponse(res, {
+			success: false,
+			message: "Issue ID must be in number",
+		});
+	}
+	if (!req.user?.role || !isRole(req.user?.role)) {
+		return sendResponse(
+			res,
+			{
+				success: false,
+				message: "You are not allowed, Only authorized person is acceptable",
+			},
+			404,
+		);
+	}
+	console.log(req.user);
+	const result = await issuesServices.updateIssuesFromDB(
+		req.body,
+		id,
+		req.user?.role,
+		req.user?.id,
+	);
+	if (!result) {
+		return sendResponse(res, {
+			success: false,
+			message: "Data can not be updated",
+		});
+	}
+	return sendResponse(res, {
+		success: true,
+		message: "Issue gotcha HEREEEEEEEEEEEEEEEEEEEEEEE!!!!!",
+		data: result,
+	});
+};
 export const issuesController = {
 	createIssue,
 	getAllIssues,
 	getSingleIssue,
+	updateIssue,
 };

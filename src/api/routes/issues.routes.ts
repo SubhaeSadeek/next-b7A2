@@ -15,5 +15,12 @@ router.get("/", issuesController.getAllIssues);
 
 // get single issue by issue ID
 router.get("/:issueId", issuesController.getSingleIssue);
+// update issues by user id (ROLE BASED)
+router.patch(
+	"/:issueId",
+	auth,
+	authorizingRole("contributor", "maintainer"),
+	issuesController.updateIssue,
+);
 
 export const issuesRoutes = { router };
