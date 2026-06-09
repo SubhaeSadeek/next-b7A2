@@ -15,7 +15,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.get("/", (req: Request, res: Response) => {
-	res.send("hellow friends!!!");
+	res.send("Welcome to DevPlus for posting your Issues!!!");
 });
 app.use("/api/auth", authRoutes.router);
 app.use("/api/issues", issuesRoutes.router);
