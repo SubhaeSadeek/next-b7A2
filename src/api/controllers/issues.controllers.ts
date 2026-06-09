@@ -115,7 +115,7 @@ const getAllIssues = async (req: Request, res: Response) => {
 
 // get single issue by issue id
 const getSingleIssue = async (req: Request, res: Response) => {
-	const id = parseInt(req.params.issueId as string); // param is /:issueId
+	const id = parseInt(req.params.id as string); // param is /:id
 
 	if (isNaN(id)) {
 		return sendResponse(
@@ -131,7 +131,7 @@ const getSingleIssue = async (req: Request, res: Response) => {
 	if (!result) {
 		return sendResponse(
 			res,
-			{ success: false, message: "Can not find issue with this id" },
+			{ success: false, message: `Can not find issue with this id: ${id}` },
 			500,
 		);
 	}
@@ -145,7 +145,7 @@ const getSingleIssue = async (req: Request, res: Response) => {
 // Update an issue (ROLE BASED)
 
 const updateIssue = async (req: Request, res: Response) => {
-	const id = parseInt(req.params.issueId as string); // param is /:issueId
+	const id = parseInt(req.params.id as string); // param is /:id
 
 	if (isNaN(id)) {
 		return sendResponse(res, {
@@ -170,10 +170,10 @@ const updateIssue = async (req: Request, res: Response) => {
 		req.user?.role,
 		req.user?.id,
 	);
-	if (!result) {
+	if (result?.issueNotExist) {
 		return sendResponse(res, {
 			success: false,
-			message: "Data can not be updated",
+			message: result.issueNotExist,
 		});
 	}
 	return sendResponse(res, {
@@ -185,7 +185,7 @@ const updateIssue = async (req: Request, res: Response) => {
 
 // delete an issue
 const deleteIssue = async (req: Request, res: Response) => {
-	const id = parseInt(req.params.issueId as string); // param is /:issueId
+	const id = parseInt(req.params.id as string); // param is /:id
 
 	if (isNaN(id)) {
 		return sendResponse(
@@ -227,7 +227,7 @@ const deleteIssue = async (req: Request, res: Response) => {
 			success: true,
 			message: "Issue deleted successfully",
 		},
-		204,
+		200,
 	);
 };
 export const issuesController = {

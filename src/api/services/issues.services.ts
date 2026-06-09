@@ -133,8 +133,12 @@ class IssuesService {
 
 		const issue = result[0] ?? null;
 		if (!issue) {
-			return null;
+			const ifIssueNotExist = {
+				issueNotExist: `Issue with ID: ${issueId} does not exist in Database`,
+			};
+			return ifIssueNotExist;
 		}
+		// Contributor update API
 		if (
 			role === "contributor" &&
 			issue.reporter_id === userId &&
@@ -153,6 +157,7 @@ class IssuesService {
 
 			return updated[0] ?? null;
 		} else if (role === "maintainer") {
+			//maintainer update api
 			const updated = await sql`
     UPDATE issues
     SET
@@ -167,7 +172,7 @@ class IssuesService {
 			return updated[0] ?? null;
 		} else {
 			throw new Error(
-				`Contributor can only update issue having status being OPEN and of His own issue. this issue having ID no. ${issue.id} has status: ${issue.status.toUpperCase()}`,
+				`Contributor can only update issue having status being OPEN and of His own issue. this issue having ID no. ${issue.id} has status: ${issue.status.toUpperCase()} and perhaps may be is NOT his Own issue`,
 			);
 		}
 	}

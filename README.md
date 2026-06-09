@@ -362,7 +362,7 @@ CREATE TABLE IF NOT EXISTS issues(
 
 # Concluding Remarks
 
-### This backend app development project demonestrate creating server using Node.js with it's popular framework `Express.js`. We are also required to build API according to instruction. We cater the whole project into popular moduler pattern splittin the whole into `router`, `controller` and `service`
+This backend app development project **demonestrate creating server using Node.js with it's popular framework `Express.js`.** We are also required to build API according to instruction. We cater the whole project into popular moduler pattern splittin the whole into `router`, `controller` and `service`
 
 ```
 

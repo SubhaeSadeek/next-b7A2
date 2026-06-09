@@ -14,17 +14,17 @@ router.post(
 router.get("/", issuesController.getAllIssues);
 
 // get single issue by issue ID
-router.get("/:issueId", issuesController.getSingleIssue);
+router.get("/:id", issuesController.getSingleIssue);
 // update issues by user id (ROLE BASED)
 router.patch(
-	"/:issueId",
+	"/:id",
 	auth,
 	authorizingRole("contributor", "maintainer"),
 	issuesController.updateIssue,
 );
 
 router.delete(
-	"/:issueId",
+	"/:id",
 	auth,
 	authorizingRole("maintainer"),
 	issuesController.deleteIssue,
