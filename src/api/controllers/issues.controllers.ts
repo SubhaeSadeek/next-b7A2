@@ -13,12 +13,26 @@ import issuesServices from "../services/issues.services";
 const createIssue = async (req: Request, res: Response) => {
 	const reporterId = req.user?.id;
 	if (!reporterId) {
-		return sendResponse(res, { success: false, message: "user not found" });
+		return sendResponse(
+			res,
+			{ success: false, message: "user not found" },
+			404,
+		);
 	}
 	const result = await issuesServices.createIssueInDB(
 		req.body,
 		req.user?.id as number,
 	);
+	if (!result.length) {
+		return sendResponse(
+			res,
+			{
+				success: false,
+				message: "Issue can not be created",
+			},
+			403,
+		);
+	}
 	return sendResponse(
 		res,
 		{ success: true, message: "Issue created successfully", data: result },
@@ -78,17 +92,21 @@ const getAllIssues = async (req: Request, res: Response) => {
 	}
 	// getting result/data from service
 	const result = await issuesServices.getAllIssuesFromDB(paramsFromQuery);
-	if (result.length === 0) {
-		return sendResponse(res, {
-			success: false,
-			message: "NO data available for this query",
-		});
+	if (!result.length) {
+		return sendResponse(
+			res,
+			{
+				success: false,
+				message: "NO data available for this query",
+			},
+			404,
+		);
 	}
 	return sendResponse(
 		res,
 		{
 			success: true,
-			message: "issues given according to query",
+			message: "Issues retrived successfully",
 			data: result,
 		},
 		200,
@@ -100,10 +118,14 @@ const getSingleIssue = async (req: Request, res: Response) => {
 	const id = parseInt(req.params.issueId as string); // param is /:issueId
 
 	if (isNaN(id)) {
-		return sendResponse(res, {
-			success: false,
-			message: "Issue ID must be in number",
-		});
+		return sendResponse(
+			res,
+			{
+				success: false,
+				message: "Issue ID must be in number",
+			},
+			400,
+		);
 	}
 	const result = await issuesServices.getSingleIssueFromDB(id);
 	if (!result) {
@@ -166,31 +188,47 @@ const deleteIssue = async (req: Request, res: Response) => {
 	const id = parseInt(req.params.issueId as string); // param is /:issueId
 
 	if (isNaN(id)) {
-		return sendResponse(res, {
-			success: false,
-			message: "Issue ID must be in number",
-		});
+		return sendResponse(
+			res,
+			{
+				success: false,
+				message: "Issue ID must be in number",
+			},
+			400,
+		);
 	}
 
 	if (!req.user?.role) {
-		return sendResponse(res, {
-			success: false,
-			message: "Unouthorize! Only maintainer can delete an issue",
-		});
+		return sendResponse(
+			res,
+			{
+				success: false,
+				message: "Unouthorize! Only maintainer can delete an issue",
+			},
+			403,
+		);
 	}
 
 	const result = await issuesServices.deleteIssueFromDB(id, req.user?.role);
 	if (!result) {
-		return sendResponse(res, {
-			success: false,
-			message: "Issue can not be deleted! Not found in DB",
-		});
+		return sendResponse(
+			res,
+			{
+				success: false,
+				message: "Issue can not be deleted! Not found in DB",
+			},
+			404,
+		);
 	}
 
-	return sendResponse(res, {
-		success: true,
-		message: "Issue deleted successfully",
-	});
+	return sendResponse(
+		res,
+		{
+			success: true,
+			message: "Issue deleted successfully",
+		},
+		204,
+	);
 };
 export const issuesController = {
 	createIssue,

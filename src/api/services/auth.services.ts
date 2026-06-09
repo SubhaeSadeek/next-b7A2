@@ -5,6 +5,17 @@ import type { RUser, User } from "../../types";
 class AuthService {
 	async createUser(user: RUser & { password: string }) {
 		const { name, email, password, role } = user;
+		// if user exist
+		const ifExist = await sql`
+		SELECT email FROM users
+		WHERE email = ${email}
+		`;
+		if (!ifExist.length) {
+			const userPrevails = {
+				existingUserMsg: `User has laready been created by this ${email} email`,
+			};
+			return userPrevails;
+		}
 
 		const hashPass = await bcrypt.hash(password, 10);
 

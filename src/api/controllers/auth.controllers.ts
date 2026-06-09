@@ -5,6 +5,10 @@ import authServices from "../services/auth.services";
 
 const signupUser = async (req: Request, res: Response) => {
 	const result = await authServices.createUser(req.body);
+	// although I have constraint in database having UNIQUE in email field, I am double checking if user exist only for learning purpose!!
+	if (result?.existingUserMsg) {
+		sendResponse(res, { success: false, message: result.existingUserMsg }, 400);
+	}
 
 	if (!result) {
 		return sendResponse(
@@ -15,7 +19,7 @@ const signupUser = async (req: Request, res: Response) => {
 	}
 	sendResponse(
 		res,
-		{ success: true, message: "user created successfully", data: result },
+		{ success: true, message: "User registered successfully", data: result },
 		201,
 	);
 };
@@ -45,7 +49,7 @@ const loginUser = async (req: Request, res: Response) => {
 	};
 	sendResponse(
 		res,
-		{ success: true, message: "user logged in successful", data: result },
+		{ success: true, message: "Login successful", data: result },
 		200,
 	);
 };

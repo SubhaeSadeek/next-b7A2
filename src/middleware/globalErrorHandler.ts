@@ -9,6 +9,5 @@ export function globalErrorHandler(
 	res.status(500).json({
 		success: false,
 		message: err instanceof Error ? err.message : "internal server error",
-		stack: err.stack,
 	});
 }
