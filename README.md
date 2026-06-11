@@ -1,6 +1,6 @@
 # 🚼 DevPulse – A backend API building to Fulfill the Required Task for Assignement 2
 
-### Live URL: [Live link](www.https://url)
+### Live URL: [Live link](https://dev-plus-olive.vercel.app/)
 
 ### About the Build:
 
