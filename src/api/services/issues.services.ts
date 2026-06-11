@@ -1,4 +1,4 @@
-import { sql } from "../../db";
+import { pool } from "../../db";
 import type {
 	Issue,
 	IssueQuery,
@@ -11,67 +11,84 @@ class IssuesService {
 	async createIssueInDB(payload: RIssue, reporterId: number) {
 		const { title, description, type, status } = payload;
 
-		const result = await sql`
+		const result = await pool.query(
+			`
     INSERT INTO issues (title, description, type, reporter_id, status)
-    VALUES (${title}, ${description}, ${type}, ${reporterId}, COALESCE(${status}, 'open'))
+    VALUES ($1, $2, $3, $4, COALESCE($5, 'open'))
     RETURNING * 
-    `;
-		return result;
+    `,
+			[title, description, type, reporterId, status],
+		);
+		return result.rows;
 	}
 
 	async getAllIssuesFromDB({ sort = "newest", type, status }: IssueQuery) {
 		const sortSql =
 			sort === "oldest"
-				? sql`ORDER BY created_at ASC`
-				: sql`ORDER BY created_at DESC`;
+				? "ORDER BY created_at ASC"
+				: "ORDER BY created_at DESC";
 
 		let issues;
 
 		if (type && status) {
-			issues = await sql`
+			issues = await pool.query(
+				`
         SELECT *
         FROM issues
-        WHERE type = ${type}
-        AND status = ${status}
+        WHERE type = $1
+        AND status = $2
         ${sortSql}
-      `;
+      `,
+				[type, status],
+			);
 		} else if (type) {
-			issues = await sql`
+			issues = await pool.query(
+				`
         SELECT *
         FROM issues
-        WHERE type = ${type}
+        WHERE type = $1
         ${sortSql}
-      `;
+      `,
+				[type],
+			);
 		} else if (status) {
-			issues = await sql`
+			issues = await pool.query(
+				`
         SELECT *
         FROM issues
-        WHERE status = ${status}
+        WHERE status = $1
         ${sortSql}
-      `;
+      `,
+				[status],
+			);
 		} else {
-			issues = await sql`
+			issues = await pool.query(`
         SELECT *
         FROM issues
         ${sortSql}
-      `;
+      `);
 		}
 
-		if (!issues.length) {
+		if (!issues.rows.length) {
 			return [];
 		}
 
-		const reporterIds = [...new Set(issues.map((issue) => issue.reporter_id))];
+		const reporterIds = [
+			...new Set(issues.rows.map((issue) => issue.reporter_id)),
+		];
 
-		const users = await sql`
-      SELECT id, name, role
-      FROM users
-      WHERE id = ANY(${reporterIds})
-    `;
+		const users = await pool.query(
+			`
+	SELECT id, name, role
+	FROM users
+	WHERE id = ANY($1::int[])
+	`,
+			[reporterIds],
+		);
 
-		const userMap = new Map(users.map((user) => [user.id, user]));
+		const userMap = new Map(users.rows.map((user) => [user.id, user]));
 
-		return issues.map((issue) => ({
+		return issues.rows.map((issue) => ({
 			id: issue.id,
 			title: issue.title,
 			description: issue.description,
@@ -85,12 +102,15 @@ class IssuesService {
 		}));
 	}
 	async getSingleIssueFromDB(issueId: number) {
-		const issue = await sql`
+		const issue = await pool.query(
+			`
 		SELECT * FROM issues
-		WHERE id = ${issueId}
+		WHERE id = $1
 		
-		`;
-		if (!issue.length) {
+		`,
+			[issueId],
+		);
+		if (!issue.rows.length) {
 			return null;
 		}
 		const {
@@ -102,12 +122,15 @@ class IssuesService {
 			reporter_id,
 			created_at,
 			updated_at,
-		} = issue[0] as Issue;
+		} = issue.rows[0] as Issue;
 
-		const reporter = await sql`
+		const reporter = await pool.query(
+			`
 		SELECT id, name, role FROM users
-		WHERE id = ${reporter_id}
-		`;
+		WHERE id = $1
+		`,
+			[reporter_id],
+		);
 
 		return {
 			id,
@@ -115,7 +138,7 @@ class IssuesService {
 			description,
 			type,
 			status,
-			reporter: reporter[0],
+			reporter: reporter.rows[0],
 			created_at,
 			updated_at,
 		};
@@ -127,49 +150,42 @@ class IssuesService {
 		role: Role,
 		userId?: number,
 	) {
-		const result = await sql`
+		const result = await pool.query(
+			`
 			SELECT * FROM issues
-			WHERE id = ${issueId}`;
+			WHERE id = $1`,
+			[issueId],
+		);
 
-		const issue = result[0] ?? null;
+		const issue = result.rows[0] ?? null;
 		if (!issue) {
 			const ifIssueNotExist = {
 				issueNotExist: `Issue with ID: ${issueId} does not exist in Database`,
 			};
 			return ifIssueNotExist;
 		}
-		// Contributor update API
+		// Contributor || maintainer update API
 		if (
-			role === "contributor" &&
-			issue.reporter_id === userId &&
-			issue.status === "open"
+			role === "maintainer" ||
+			(role === "contributor" &&
+				issue.reporter_id === userId &&
+				issue.status === "open")
 		) {
-			const updated = await sql`
-    UPDATE issues
-    SET
-      title = COALESCE(${payload.title}, title),
-      description = COALESCE(${payload.description}, description),
-      type = COALESCE(${payload.type}, type),
-      updated_at = NOW()
-    WHERE id = ${issueId}
-    RETURNING *
-  `;
+			const updated = await pool.query(
+				`
+	UPDATE issues
+	SET
+		title = COALESCE($1, title),
+		description = COALESCE($2, description),
+		type = COALESCE($3, type),
+		updated_at = NOW()
+	WHERE id = $4
+	RETURNING *
+	`,
+				[payload.title, payload.description, payload.type, issueId],
+			);
 
-			return updated[0] ?? null;
-		} else if (role === "maintainer") {
-			//maintainer update api
-			const updated = await sql`
-    UPDATE issues
-    SET
-      title = COALESCE(${payload.title}, title),
-      description = COALESCE(${payload.description}, description),
-      type = COALESCE(${payload.type}, type),
-      updated_at = NOW()
-    WHERE id = ${issueId}
-    RETURNING *
-  `;
-
-			return updated[0] ?? null;
+			return updated.rows[0] ?? null;
 		} else {
 			throw new Error(
 				`Contributor can only update issue having status being OPEN and of His own issue. this issue having ID no. ${issue.id} has status: ${issue.status.toUpperCase()} and perhaps may be is NOT his Own issue`,
@@ -179,20 +195,26 @@ class IssuesService {
 
 	// delete operation
 	async deleteIssueFromDB(issueId: number, role: Role) {
-		const result = await sql`
+		const result = await pool.query(
+			`
 			SELECT * FROM issues
-			WHERE id = ${issueId}`;
+			WHERE id = $1`,
+			[issueId],
+		);
 
-		const issue = result[0] ?? null;
+		const issue = result.rows[0] ?? null;
 		if (!issue) {
 			return null;
 		}
 
 		if (role === "maintainer") {
-			const deletedIssue = await sql`
+			const deletedIssue = await pool.query(
+				`
 			DELETE FROM issues
-			WHERE id = ${issueId} 
-			`;
+			WHERE id = $1 
+			`,
+				[issueId],
+			);
 			return true;
 		} else {
 			throw new Error(`Unouthorized!! Only maintainer can delete an issue!`);

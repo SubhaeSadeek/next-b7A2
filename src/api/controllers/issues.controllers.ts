@@ -11,8 +11,8 @@ import issuesServices from "../services/issues.services";
 
 // as error is handeled as a middleware in app.ts, it is not reapeated by having try... catch block here. the name of the middleware is --globalErrorHandler.ts--
 const createIssue = async (req: Request, res: Response) => {
-	const reporterId = req.user?.id;
-	if (!reporterId) {
+	const userId = req.user?.id;
+	if (!userId) {
 		return sendResponse(
 			res,
 			{ success: false, message: "user not found" },
@@ -23,6 +23,7 @@ const createIssue = async (req: Request, res: Response) => {
 		req.body,
 		req.user?.id as number,
 	);
+	console.log(result);
 	if (!result.length) {
 		return sendResponse(
 			res,
@@ -35,7 +36,7 @@ const createIssue = async (req: Request, res: Response) => {
 	}
 	return sendResponse(
 		res,
-		{ success: true, message: "Issue created successfully", data: result },
+		{ success: true, message: "Issue created successfully", data: result[0] },
 		201,
 	);
 };

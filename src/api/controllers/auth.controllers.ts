@@ -7,7 +7,11 @@ const signupUser = async (req: Request, res: Response) => {
 	const result = await authServices.createUser(req.body);
 	// although I have constraint in database having UNIQUE in email field, I am double checking if user exist only for learning purpose!!
 	if (result?.existingUserMsg) {
-		sendResponse(res, { success: false, message: result.existingUserMsg }, 400);
+		return sendResponse(
+			res,
+			{ success: false, message: result.existingUserMsg },
+			400,
+		);
 	}
 
 	if (!result) {
@@ -17,7 +21,7 @@ const signupUser = async (req: Request, res: Response) => {
 			500,
 		);
 	}
-	sendResponse(
+	return sendResponse(
 		res,
 		{ success: true, message: "User registered successfully", data: result },
 		201,
@@ -28,13 +32,13 @@ const loginUser = async (req: Request, res: Response) => {
 	const { email, password } = req.body;
 	const user = await authServices.validateUser(email, password);
 	if (!user) {
-		sendResponse(
+		return sendResponse(
 			res,
 			{ success: false, message: "invalid email or password" },
 			401,
 		);
-		return;
 	}
+
 	const { accessToken, refreshToken } = signToken(user);
 
 	res.cookie("refreshToken", refreshToken, {
@@ -47,7 +51,7 @@ const loginUser = async (req: Request, res: Response) => {
 		token: accessToken,
 		user: user,
 	};
-	sendResponse(
+	return sendResponse(
 		res,
 		{ success: true, message: "Login successful", data: result },
 		200,
@@ -59,7 +63,7 @@ const loginUser = async (req: Request, res: Response) => {
 const refreshToken = async (req: Request, res: Response) => {
 	const refreshToken = req.cookies?.refreshToken;
 	if (!refreshToken) {
-		sendResponse(
+		return sendResponse(
 			res,
 			{ success: false, message: "refresh token not found" },
 			404,
@@ -67,7 +71,7 @@ const refreshToken = async (req: Request, res: Response) => {
 	}
 	const payload = varifyToken(refreshToken, "refresh");
 	if (!payload) {
-		sendResponse(
+		return sendResponse(
 			res,
 			{
 				success: false,
@@ -75,12 +79,14 @@ const refreshToken = async (req: Request, res: Response) => {
 			},
 			401,
 		);
-		return;
 	}
 	const user = await authServices.getUserById(payload.id);
 	if (!user) {
-		sendResponse(res, { success: false, message: "User not found" }, 404);
-		return;
+		return sendResponse(
+			res,
+			{ success: false, message: "User not found" },
+			404,
+		);
 	}
 	const { accessToken, refreshToken: newRefreshToken } = signToken(user);
 	res.cookie("refreshToken", newRefreshToken, {
@@ -88,7 +94,7 @@ const refreshToken = async (req: Request, res: Response) => {
 		sameSite: "lax",
 		httpOnly: true,
 	});
-	sendResponse(res, {
+	return sendResponse(res, {
 		success: true,
 		message: "access tokens has been sent",
 		data: {
